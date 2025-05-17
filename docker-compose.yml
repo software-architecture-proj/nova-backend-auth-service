@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: auth_mongodb
+    command: mongod --auth --bind_ip_all
+    ports:
+      - "27017:27017"
+    volumes:
+      - auth_mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password123
+      - MONGO_INITDB_DATABASE=auth_db
+    restart: always
+
+volumes:
+  auth_mongodb_data:
