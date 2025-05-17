@@ -4,11 +4,6 @@ package auth;
 
 option go_package = "github.com/software-architecture-proj/nova-backend-auth-service/services/genproto/auth";
 
-service AuthService {
-    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
-    rpc LoginUser(LoginRequest) returns (LoginResponse) {}
-}
-
 // User Creation
 message CreateUserRequest {
     string email = 1;
@@ -17,8 +12,8 @@ message CreateUserRequest {
     string first_name = 4;
     string last_name = 5;
     string birthdate = 6; // Format: "YYYY-MM-DD"
-    string phone = 7;
-    string code_id = 8; // id from country_code
+    int64 phone = 7;      // Phone number as integer
+    int32 code_id = 8;    // Country code ID as integer
 }
 
 message CreateUserResponse {
@@ -31,7 +26,7 @@ message CreateUserResponse {
     string last_name = 7;
 }
 
-// Authentication
+// User Login
 message LoginRequest {
     string email = 1;
     string password = 2;
