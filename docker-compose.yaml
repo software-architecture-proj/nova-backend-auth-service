@@ -15,5 +15,20 @@ services:
       - MONGO_INITDB_DATABASE=auth_db
     restart: always
 
+  auth_service:
+    build: .
+    container_name: auth_service
+    depends_on:
+      - mongodb
+    ports:
+      - "50051:50051"
+    environment:
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/auth_db?authSource=admin
+      - MONGODB_DATABASE=auth_db
+    restart: on-failure
+
 volumes:
   auth_mongodb_data:
+
+# To run the services, use the following command:
+# docker-compose up
