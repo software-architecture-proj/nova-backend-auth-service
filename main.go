@@ -116,7 +116,7 @@ func main() {
 	// Connect to MongoDB
 	mongodb, err := database.NewMongoDB(cfg.MongoDB.URI, cfg.MongoDB.Database)
 	if err != nil {
-		log.Fatalf("Failed to connect to MongoDB :50051")
+		log.Fatalf("Failed to connect to MongoDB :50053")
 	}
 	defer mongodb.Close(context.Background())
 
@@ -125,11 +125,11 @@ func main() {
 	pb.RegisterAuthServiceServer(server, &authServer{db: mongodb})
 
 	// Start listening on a random available port
-	lis, err := net.Listen("tcp", ":50051")
+	lis, err := net.Listen("tcp", ":50053")
 	if err != nil {
-		log.Fatalf("Failed to listen :50051")
+		log.Fatalf("Failed to listen :50053")
 	}
-	log.Printf("Server is listening on port :50051")
+	log.Printf("Server is listening on port :50053")
 
 	// Handle graceful shutdown
 	go func() {
@@ -141,7 +141,7 @@ func main() {
 	}()
 
 	// Start server
-	log.Printf("Starting gRPC server on port :50051")
+	log.Printf("Starting gRPC server on port :50053")
 	if err := server.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
 	}

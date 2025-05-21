@@ -11,6 +11,3 @@ FROM alpine:latest
 WORKDIR /root/
 COPY --from=builder /app/auth_service .
 CMD ["./auth_service"]
-
-# To build the Docker image, run:
-# docker build -t auth_service:x .

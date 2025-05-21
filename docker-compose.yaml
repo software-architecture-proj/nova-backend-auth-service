@@ -16,12 +16,11 @@ services:
     restart: always
 
   auth_service:
-    build: .
-    container_name: auth_service
+    image: auth_service:test
     depends_on:
       - mongodb
     ports:
-      - "50051:50051"
+      - "50053:50053"
     environment:
       - MONGODB_URI=mongodb://admin:password123@mongodb:27017/auth_db?authSource=admin
       - MONGODB_DATABASE=auth_db
@@ -29,6 +28,3 @@ services:
 
 volumes:
   auth_mongodb_data:
-
-# To run the services, use the following command:
-# docker-compose up
