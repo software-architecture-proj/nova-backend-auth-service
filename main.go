@@ -56,15 +56,53 @@ func (s *authServer) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb.L
 		"email": req.Email,
 	}).Decode(&user)
 
+	// If user doesn't exist, create a new one
 	if err != nil {
-		log.Printf("User not found: %v", err)
+		log.Printf("User not found, creating new user with email: %s", req.Email)
+		
+		// Hash the password
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return &pb.LoginResponse{
+				Success: false,
+				Message: "Error processing password",
+			}, fmt.Errorf("failed to hash password: %v", err)
+		}
+
+		now := time.Now()
+		// Create new user with required fields
+		user = User{
+			ID:        uuid.New(),
+			Email:     req.Email,
+			Username:  fmt.Sprintf("user_%d", now.Unix()), // Generate a username
+			Password:  string(hashedPassword),
+			FirstName: "User",                             // Default first name
+			LastName:  fmt.Sprintf("%d", now.Unix()),      // Default last name
+			Birthdate: "2000-01-01",                       // Default birthdate
+			CreatedAt: now,
+			UpdatedAt: now,
+		}
+
+		// Insert the new user
+		_, err = s.db.Users().InsertOne(ctx, user)
+		if err != nil {
+			log.Printf("Failed to create user: %v", err)
+			return &pb.LoginResponse{
+				Success: false,
+				Message: "Failed to create user",
+			}, fmt.Errorf("failed to insert user: %v", err)
+		}
+
+		log.Printf("Created new user with email: %s", req.Email)
+		
 		return &pb.LoginResponse{
-			Success: false,
-			Message: "Invalid email or password",
-		}, fmt.Errorf("user not found: %v", err)
+			Success: true,
+			Message: "User created and logged in successfully",
+			Email:   user.Email,
+		}, nil
 	}
 
-	// Compare password
+	// If user exists, verify password
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
 		log.Printf("Invalid password for user %s", req.Email)
 		return &pb.LoginResponse{
@@ -80,9 +118,6 @@ func (s *authServer) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb.L
 		Message: "Login successful",
 		Email:   user.Email,
 	}
-
-	// Debug log for final response
-	log.Printf("Debug - Final Response: %+v", response)
 
 	return response, nil
 }
