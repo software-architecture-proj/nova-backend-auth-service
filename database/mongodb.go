@@ -41,7 +41,7 @@ func NewMongoDB(uri, dbName string) (*MongoDB, error) {
 	database := client.Database(dbName)
 
 	// Initialize collections
-	if err := InitializeCollections(ctx, database); err != nil {
+	if err := InitializeCollectionsV2(ctx, database); err != nil {
 		return nil, err
 	}
 

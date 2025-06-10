@@ -9,7 +9,7 @@ import (
 )
 
 // InitializeCollections sets up the MongoDB collections with proper validation
-func InitializeCollections(ctx context.Context, db *mongo.Database) error {
+func InitializeCollectionsV2(ctx context.Context, db *mongo.Database) error {
 	// Drop existing collection if it exists
 	if err := db.Collection("users").Drop(ctx); err != nil {
 		return err
@@ -19,40 +19,27 @@ func InitializeCollections(ctx context.Context, db *mongo.Database) error {
 	validator := bson.M{
 		"$jsonSchema": bson.M{
 			"bsonType": "object",
-			"required": []string{"email", "username", "first_name", "last_name", "created_at", "updated_at"},
+			"required": []string{"email", "phone", "password", "last_log", "created_at", "updated_at"},
 			"properties": bson.M{
 				"email": bson.M{
 					"bsonType": "string",
 					"pattern":  "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
 				},
-				"username": bson.M{
-					"bsonType":  "string",
-					"minLength": 3,
-				},
 				"phone": bson.M{
 					"bsonType": "string",
 				},
-				"code_id": bson.M{
+				"password": bson.M{
 					"bsonType": "string",
 				},
-				"first_name": bson.M{
+				"last_log": bson.M{
 					"bsonType": "string",
-				},
-				"last_name": bson.M{
-					"bsonType": "string",
-				},
-				"birthdate": bson.M{
-					"bsonType": "string",
-					"pattern":  "^\\d{4}-\\d{2}-\\d{2}$",
+					"pattern":  "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}$",
 				},
 				"created_at": bson.M{
 					"bsonType": "date",
 				},
 				"updated_at": bson.M{
 					"bsonType": "date",
-				},
-				"deleted_at": bson.M{
-					"bsonType": []string{"date", "null"},
 				},
 			},
 		},
@@ -69,10 +56,6 @@ func InitializeCollections(ctx context.Context, db *mongo.Database) error {
 	indexes := []mongo.IndexModel{
 		{
 			Keys:    bson.D{{Key: "email", Value: 1}},
-			Options: options.Index().SetUnique(true),
-		},
-		{
-			Keys:    bson.D{{Key: "username", Value: 1}},
 			Options: options.Index().SetUnique(true),
 		},
 		{

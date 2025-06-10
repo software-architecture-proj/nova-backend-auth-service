@@ -39,8 +39,5 @@ mkdir -p service/genproto/auth
 ```
 ```bash
 protoc \
-    --proto_path=protobuf "protobuf/auth.proto" \
-    --go_out=service/genproto/auth --go_opt=paths=source_relative \
-    --go-grpc_out=service/genproto/auth \
-    --go-grpc_opt=paths=source_relative
+    protoc --go_out=gen/go/auth_service --go_opt=paths=source_relative --go-grpc_out=gen/go/auth_service --go-grpc_opt=paths=source_relative proto/auth.proto
 ```
