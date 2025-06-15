@@ -21,9 +21,8 @@ type Producer struct {
 
 type LoginNotification struct {
 	Type      string `json:"type"`
+	Email     string `json:"email"`
 	Timestamp string `json:"timestamp"`
-	IPAddress string `json:"ip_address"`
-	Device    string `json:"device"`
 }
 
 func NewProducer() (*Producer, error) {
@@ -96,12 +95,11 @@ func NewProducer() (*Producer, error) {
 	}, nil
 }
 
-func (p *Producer) SendLoginNotification(ipAddress, device string) error {
+func (p *Producer) SendLoginNotification(email string) error {
 	notification := LoginNotification{
 		Type:      "login",
+		Email:     email,
 		Timestamp: time.Now().Format(time.RFC3339),
-		IPAddress: ipAddress,
-		Device:    device,
 	}
 
 	body, err := json.Marshal(notification)

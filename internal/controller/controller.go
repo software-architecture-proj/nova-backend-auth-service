@@ -13,6 +13,8 @@ import (
 	pb "github.com/software-architecture-proj/nova-backend-auth-service/gen/go/auth_service"
 	serv "github.com/software-architecture-proj/nova-backend-auth-service/internal/service"
 	mod "github.com/software-architecture-proj/nova-backend-auth-service/models"
+	"github.com/software-architecture-proj/nova-backend-auth-service/notification"
+
 )
 
 type AuthServer struct {
@@ -22,6 +24,14 @@ type AuthServer struct {
 
 func (s *AuthServer) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb.Response, error) {
 	log.Printf("Received login request for email: %s", req.Email)
+
+    // Create the producer
+    producer, err := notification.NewProducer()
+    if err != nil {
+        log.Printf("Failed to create notification producer: %v", err)
+        return
+    }
+    defer producer.Close()  // Always close the producer when done
 
 	// Validate login request
 	if err := validateLoginRequest(req); err != nil {
@@ -39,6 +49,12 @@ func (s *AuthServer) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb.R
 		return badResponse(fmt.Sprintf("Failed to build token: %v", err)), fmt.Errorf("failed to build token: %v", err)
 	}
 
+    // Send the login notification
+    err = producer.SendLoginNotification(req.Email)
+    if err != nil {
+        log.Printf("Failed to send login notification: %v", err)
+        return
+    }
 	log.Printf("User logged in successfully: %s", req.Email)
 	return goodResponse("Login successful", tokenString), nil
 }
