@@ -19,7 +19,15 @@ import (
 
 type AuthServer struct {
 	pb.UnimplementedAuthServiceServer
-	Db *database.MongoDB
+	Db      *database.MongoDB
+	service *serv.AuthService
+}
+
+func NewAuthServer(db *database.MongoDB) *AuthServer {
+	return &AuthServer{
+		Db:      db,
+		service: serv.NewAuthService(db),
+	}
 }
 
 func (s *AuthServer) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb.Response, error) {
@@ -38,8 +46,7 @@ func (s *AuthServer) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb.R
 		return badResponse(err.Error()), fmt.Errorf("notif error: %v", err)
 	}
 
-	user, err := serv.LogInWEmail(ctx, req.Email, req.Password)
-
+	user, err := s.service.LogInWEmail(ctx, req.Email, req.Password)
 	if err != nil {
 		return badResponse(err.Error()), fmt.Errorf("failed to log in user: %v", err)
 	}
@@ -58,6 +65,7 @@ func (s *AuthServer) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb.R
 	log.Printf("User logged in successfully: %s", req.Email)
 	return goodResponse("Login successful", tokenString), nil
 }
+
 func validateLoginRequest(req *pb.LoginRequest) error {
 	// Validate email
 	if req.Email == "" {
@@ -95,13 +103,14 @@ func (s *AuthServer) CreateUser(ctx context.Context, req *pb.CreateUserRequest) 
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
-	userID, err := serv.NewUser(ctx, &user)
+	userID, err := s.service.NewUser(ctx, &user)
 
 	if err != nil {
 		return badResponse(err.Error()), fmt.Errorf("failed to create user: %v", err)
 	}
 	return goodResponse("User created successfully", userID), nil
 }
+
 func validateSignUpRequest(req *pb.CreateUserRequest) error {
 	// Validate email
 	if req.Email == "" {
@@ -135,6 +144,7 @@ func validateSignUpRequest(req *pb.CreateUserRequest) error {
 	}
 	return nil
 }
+
 func buildToken(user *mod.UserV2) (string, error) {
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"userID":   user.ID,
@@ -176,6 +186,7 @@ func badResponse(message string) *pb.Response {
 		Message: message,
 	}
 }
+
 func goodResponse(message string, data string) *pb.Response {
 	return &pb.Response{
 		Success: true,
