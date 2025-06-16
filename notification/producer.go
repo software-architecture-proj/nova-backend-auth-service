@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	amqpURL     = "amqp://notifier:S3cUr0!Pass@localhost:5672/notifications"
-	exchange    = "notifications"
-	routingKey  = "email"
+	amqpURL    = "amqp://notifier:S3cUr0!Pass@rabbitmq:5672/notifications"
+	exchange   = "notifications"
+	routingKey = "email"
 )
 
 type Producer struct {
@@ -70,7 +70,7 @@ func NewProducer() (*Producer, error) {
 
 	// Bind the queue to the exchange
 	err = ch.QueueBind(
-		q.Name,    // queue name
+		q.Name,     // queue name
 		routingKey, // routing key
 		exchange,   // exchange
 		false,      // no-wait
@@ -108,10 +108,10 @@ func (p *Producer) SendLoginNotification(email string) error {
 	}
 
 	err = p.channel.Publish(
-		exchange,    // exchange
-		routingKey,  // routing key
-		false,       // mandatory
-		false,       // immediate
+		exchange,   // exchange
+		routingKey, // routing key
+		false,      // mandatory
+		false,      // immediate
 		amqp.Publishing{
 			ContentType:  "application/json",
 			DeliveryMode: amqp.Persistent,
@@ -135,4 +135,4 @@ func (p *Producer) Close() {
 	if p.conn != nil {
 		p.conn.Close()
 	}
-} 
+}

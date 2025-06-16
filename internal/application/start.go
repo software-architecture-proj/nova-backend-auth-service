@@ -10,8 +10,8 @@ import (
 
 	"github.com/software-architecture-proj/nova-backend-auth-service/config"
 	"github.com/software-architecture-proj/nova-backend-auth-service/database"
-	pb "github.com/software-architecture-proj/nova-backend-common-protos/gen/go/auth_service"
 	cont "github.com/software-architecture-proj/nova-backend-auth-service/internal/controller"
+	pb "github.com/software-architecture-proj/nova-backend-common-protos/gen/go/auth_service"
 	"google.golang.org/grpc"
 )
 
@@ -24,11 +24,10 @@ func InitializeServer(port string) {
 	if err != nil {
 		log.Fatalf("Failed to connect to MongoDB :50053")
 	}
-	defer mongodb.Close(context.Background())
 
 	// Create gRPC server
 	server := grpc.NewServer()
-	pb.RegisterAuthServiceServer(server, &cont.AuthServer{Db: mongodb})
+	pb.RegisterAuthServiceServer(server, cont.NewAuthServer(mongodb))
 
 	// Start listening on a random available port
 	lis, err := net.Listen("tcp", ":"+port)
@@ -44,6 +43,7 @@ func InitializeServer(port string) {
 		<-sigChan
 		log.Println("Shutting down gRPC server...")
 		server.GracefulStop()
+		mongodb.Close(context.Background())
 	}()
 
 	// Start server
