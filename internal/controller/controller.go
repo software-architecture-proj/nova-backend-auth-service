@@ -148,6 +148,9 @@ func validateSignUpRequest(req *pb.CreateUserRequest) error {
 func buildToken(user *mod.UserV2) (string, error) {
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"userID":   user.ID,
+		"email":    user.Email,
+		"username": user.Username,
+		"phone":    user.Phone,
 		"lastLog":  time.Now().Format("2006-01-02 15:04"),
 		"iat":      time.Now().Unix(),
 		"exp":      time.Now().Add(15 * time.Minute).Unix(),
