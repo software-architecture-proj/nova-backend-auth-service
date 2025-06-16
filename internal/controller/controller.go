@@ -33,7 +33,6 @@ func NewAuthServer(db *database.MongoDB) *AuthServer {
 func (s *AuthServer) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb.Response, error) {
 	log.Printf("Received login request for email: %s", req.Email)
 
-
 	// Create the producer
 	producer, err := notification.NewProducer()
 	if err != nil {
@@ -41,7 +40,6 @@ func (s *AuthServer) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb.R
 		return badResponse(err.Error()), fmt.Errorf("validation error: %v", err)
 	}
 	defer producer.Close() // Always close the producer when done
-
 
 	// Validate login request
 	if err := validateLoginRequest(req); err != nil {
@@ -57,7 +55,6 @@ func (s *AuthServer) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb.R
 	if err != nil {
 		return badResponse(fmt.Sprintf("Failed to build token: %v", err)), fmt.Errorf("failed to build token: %v", err)
 	}
-
 
 	// Send the login notification
 	err = producer.SendLoginNotification(req.Email)
@@ -161,6 +158,7 @@ func buildToken(user *mod.UserV2) (string, error) {
 		"type":     "access",
 		"httpOnly": true,
 		"secure":   true,
+		"sameSite": "None",
 	})
 
 	// Sign both tokens
