@@ -10,7 +10,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/software-architecture-proj/nova-backend-auth-service/database"
-	pb "github.com/software-architecture-proj/nova-backend-auth-service/gen/go/auth_service"
+	pb "github.com/software-architecture-proj/nova-backend-common-protos/gen/go/auth_service"
 	serv "github.com/software-architecture-proj/nova-backend-auth-service/internal/service"
 	mod "github.com/software-architecture-proj/nova-backend-auth-service/models"
 	"github.com/software-architecture-proj/nova-backend-auth-service/notification"
@@ -29,7 +29,7 @@ func (s *AuthServer) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb.R
     producer, err := notification.NewProducer()
     if err != nil {
         log.Printf("Failed to create notification producer: %v", err)
-        return
+        return badResponse("Failed to create notification producer"), fmt.Errorf("failed to create notification producer: %v", err)
     }
     defer producer.Close()  // Always close the producer when done
 
@@ -53,7 +53,7 @@ func (s *AuthServer) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb.R
     err = producer.SendLoginNotification(req.Email)
     if err != nil {
         log.Printf("Failed to send login notification: %v", err)
-        return
+        return badResponse("Failed to send login notification"), fmt.Errorf("failed to send login notification: %v", err)
     }
 	log.Printf("User logged in successfully: %s", req.Email)
 	return goodResponse("Login successful", tokenString), nil

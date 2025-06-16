@@ -10,7 +10,7 @@ import (
 
 	"github.com/software-architecture-proj/nova-backend-auth-service/config"
 	"github.com/software-architecture-proj/nova-backend-auth-service/database"
-	pb "github.com/software-architecture-proj/nova-backend-auth-service/gen/go/auth_service"
+	pb "github.com/software-architecture-proj/nova-backend-common-protos/gen/go/auth_service"
 	cont "github.com/software-architecture-proj/nova-backend-auth-service/internal/controller"
 	"google.golang.org/grpc"
 )
