@@ -3,7 +3,10 @@ module github.com/software-architecture-proj/nova-backend-auth-service
 go 1.24.3
 
 require (
+	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/uuid v1.6.0
+	github.com/software-architecture-proj/nova-backend-common-protos v0.0.0-20250616022611-dcf45b575ecc
+	github.com/streadway/amqp v1.1.0
 	go.mongodb.org/mongo-driver v1.17.3
 	golang.org/x/crypto v0.38.0
 	google.golang.org/grpc v1.72.1
@@ -11,7 +14,6 @@ require (
 )
 
 require (
-	github.com/golang-jwt/jwt/v5 v5.2.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect

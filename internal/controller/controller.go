@@ -10,11 +10,11 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/software-architecture-proj/nova-backend-auth-service/database"
-	pb "github.com/software-architecture-proj/nova-backend-auth-service/gen/go/auth_service"
 	serv "github.com/software-architecture-proj/nova-backend-auth-service/internal/service"
 	mod "github.com/software-architecture-proj/nova-backend-auth-service/models"
 	"github.com/software-architecture-proj/nova-backend-auth-service/notification"
 
+	pb "github.com/software-architecture-proj/nova-backend-common-protos/gen/go/auth_service"
 )
 
 type AuthServer struct {
@@ -25,17 +25,17 @@ type AuthServer struct {
 func (s *AuthServer) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb.Response, error) {
 	log.Printf("Received login request for email: %s", req.Email)
 
-    // Create the producer
-    producer, err := notification.NewProducer()
-    if err != nil {
-        log.Printf("Failed to create notification producer: %v", err)
-        return
-    }
-    defer producer.Close()  // Always close the producer when done
+	// Create the producer
+	producer, err := notification.NewProducer()
+	if err != nil {
+		log.Printf("Failed to create notification producer: %v", err)
+		return badResponse(err.Error()), fmt.Errorf("validation error: %v", err)
+	}
+	defer producer.Close() // Always close the producer when done
 
 	// Validate login request
 	if err := validateLoginRequest(req); err != nil {
-		return badResponse(err.Error()), fmt.Errorf("validation error: %v", err)
+		return badResponse(err.Error()), fmt.Errorf("notif error: %v", err)
 	}
 
 	user, err := serv.LogInWEmail(ctx, req.Email, req.Password)
@@ -49,12 +49,12 @@ func (s *AuthServer) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb.R
 		return badResponse(fmt.Sprintf("Failed to build token: %v", err)), fmt.Errorf("failed to build token: %v", err)
 	}
 
-    // Send the login notification
-    err = producer.SendLoginNotification(req.Email)
-    if err != nil {
-        log.Printf("Failed to send login notification: %v", err)
-        return
-    }
+	// Send the login notification
+	err = producer.SendLoginNotification(req.Email)
+	if err != nil {
+		log.Printf("Failed to send login notification: %v", err)
+		return badResponse(err.Error()), fmt.Errorf("notif error: %v", err)
+	}
 	log.Printf("User logged in successfully: %s", req.Email)
 	return goodResponse("Login successful", tokenString), nil
 }
@@ -88,6 +88,8 @@ func (s *AuthServer) CreateUser(ctx context.Context, req *pb.CreateUserRequest) 
 	user := mod.UserV2{
 		ID:        uuid.New(),
 		Email:     req.Email,
+		Username:  req.Username,
+		Password:  req.Password,
 		Phone:     req.Phone,
 		LastLog:   now.Format("2006-01-02 15:04"),
 		CreatedAt: now,
