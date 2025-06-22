@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: auth_mongodb
+    command: mongod --auth --bind_ip_all
+    ports:
+      - "27017:27017"
+    volumes:
+      - auth_mongodb_data:/data/db
+      # If you use MongoDB init scripts (e.g., to create a dedicated user), keep this:
+      # - ./mongo-init-scripts:/docker-entrypoint-initdb.d
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password123
+      - MONGO_INITDB_DATABASE=auth_db
+    restart: always
+    healthcheck: # Recommended for more robust `depends_on`
+      test: ["CMD", "mongosh", "--eval", "db.runCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth_service:
+    build:
+      context: .             # The build context is the current directory (where docker-compose.yml is)
+      dockerfile: Dockerfile.dev # Use the new development Dockerfile
+    container_name: auth_service_dev # A good practice to differentiate development containers
+    depends_on:
+      mongodb:
+        condition: service_healthy # Wait for MongoDB to be healthy
+    ports:
+      - "50053:50053"
+    environment:
+      # Adjust if you use a dedicated user and secret management
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/auth_db?authSource=admin
+      - MONGODB_DATABASE=auth_db
+    volumes:
+      # THIS IS CRUCIAL: Bind mount your current directory (host) to /app (container)
+      # This allows 'air' inside the container to see your local file changes
+      - .:/app
+    restart: on-failure
+
+volumes:
+  auth_mongodb_data:
+
+  #RUN docker compose -f docker-compose.dev.yml up --build

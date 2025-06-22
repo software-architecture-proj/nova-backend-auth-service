@@ -13,6 +13,8 @@ import (
 	serv "github.com/software-architecture-proj/nova-backend-auth-service/internal/service"
 	mod "github.com/software-architecture-proj/nova-backend-auth-service/models"
 	"github.com/software-architecture-proj/nova-backend-auth-service/notification"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	pb "github.com/software-architecture-proj/nova-backend-common-protos/gen/go/auth_service"
 )
@@ -33,35 +35,37 @@ func NewAuthServer(db *database.MongoDB) *AuthServer {
 func (s *AuthServer) LoginUser(ctx context.Context, req *pb.LoginRequest) (*pb.Response, error) {
 	log.Printf("Received login request for email: %s", req.Email)
 
-	// Create the producer
-	producer, err := notification.NewProducer()
-	if err != nil {
-		log.Printf("Failed to create notification producer: %v", err)
-		return badResponse(err.Error()), fmt.Errorf("validation error: %v", err)
-	}
-	defer producer.Close() // Always close the producer when done
-
 	// Validate login request
 	if err := validateLoginRequest(req); err != nil {
-		return badResponse(err.Error()), fmt.Errorf("notif error: %v", err)
+		return badResponse(err.Error()), status.Errorf(codes.Internal, "notif error: %v", err)
 	}
 
 	user, err := s.service.LogInWEmail(ctx, req.Email, req.Password)
 	if err != nil {
-		return badResponse(err.Error()), fmt.Errorf("failed to log in user: %v", err)
+		return badResponse(err.Error()), status.Errorf(codes.InvalidArgument, "failed to log in user: %v", err)
 	}
 
 	tokenString, err := buildToken(user)
 	if err != nil {
-		return badResponse(fmt.Sprintf("Failed to build token: %v", err)), fmt.Errorf("failed to build token: %v", err)
+		return badResponse(fmt.Sprintf("Failed to build token: %v", err)), status.Errorf(codes.Internal, "failed to build token: %v", err)
 	}
 
-	// Send the login notification
-	err = producer.SendLoginNotification(req.Email)
-	if err != nil {
-		log.Printf("Failed to send login notification: %v", err)
-		return badResponse(err.Error()), fmt.Errorf("notif error: %v", err)
-	}
+	// Run notification in the background only if producer was created successfully
+	go func() {
+		producer, err := notification.NewProducer()
+		if err != nil || producer == nil {
+			log.Printf("Failed to create notification producer V2: %v", err)
+			return
+		}
+		defer func() {
+			if producer != nil {
+				producer.Close()
+			}
+		}()
+		if err := producer.SendLoginNotification(req.Email); err != nil {
+			log.Printf("Failed to send login notification: %v", err)
+		}
+	}()
 
 	log.Printf("User logged in successfully: %s", req.Email)
 	return goodResponse("Login successful", tokenString), nil
@@ -90,7 +94,7 @@ func validateLoginRequest(req *pb.LoginRequest) error {
 
 func (s *AuthServer) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb.Response, error) {
 	if err := validateSignUpRequest(req); err != nil {
-		return badResponse(err.Error()), fmt.Errorf("validation error: %v", err)
+		return badResponse(err.Error()), status.Errorf(codes.InvalidArgument, "validation error: %v", err)
 	}
 	now := time.Now()
 
@@ -107,11 +111,10 @@ func (s *AuthServer) CreateUser(ctx context.Context, req *pb.CreateUserRequest) 
 	userID, err := s.service.NewUser(ctx, &user)
 
 	if err != nil {
-		return badResponse(err.Error()), fmt.Errorf("failed to create user: %v", err)
+		return badResponse(err.Error()), status.Errorf(codes.Internal, "failed to create user: %v", err)
 	}
 	return goodResponse("User created successfully", userID), nil
 }
-
 func validateSignUpRequest(req *pb.CreateUserRequest) error {
 	// Validate email
 	if req.Email == "" {
@@ -168,20 +171,6 @@ func buildToken(user *mod.UserV2) (string, error) {
 	}
 
 	return accessTokenString, nil
-}
-
-func parseJWT(tokenString string) (*jwt.Token, error) {
-	// Parse the JWT token
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte("Thunderbolts*"), nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse JWT: %v", err)
-	}
-	return token, nil
 }
 
 // Responses

@@ -43,3 +43,12 @@ func (s *AuthService) NewUser(ctx context.Context, user *mod.UserV2) (string, er
 
 	return userID, nil
 }
+
+func (s *AuthService) DeleteUser(ctx context.Context, user *mod.UserV2) (string, error) {
+	userID, err := s.repo.DBDeleteUser(ctx, user)
+	if err != nil {
+		return "", fmt.Errorf("failed to delete user: %v", err)
+	}
+
+	return userID, nil
+}
