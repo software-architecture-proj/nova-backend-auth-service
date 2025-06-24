@@ -1,42 +1,40 @@
 # .air.toml
-# This file tells 'air' how to watch, build, and run your Go application
+# Config for air, a live-reloader for Go applications.
+# Place this file in the root of each Go service.
 
-root = "."        # Watch for changes starting from the current directory
-tmp_dir = "tmp"   # Temporary directory for compiled binaries
+# The root directory of your project
+root = "."
+tmp_dir = "tmp"
 
 [build]
-# Command to build your Go application. 'air' will run this on changes.
-cmd = "go build -o ./tmp/auth_service_app ./main.go"
-# Path to the compiled binary that 'air' should run
-bin = "./tmp/auth_service_app"
-poll = true                 
-poll_interval = 500         
-# Delay after a file change before 'air' starts the build/restart process
-delay = 1000 # milliseconds
-
-# Files and directories to include/exclude from watching
-include_ext = ["go", "tpl", "html", "yaml", "json"] # Add other file types you work with
-exclude_dir = ["tmp", "vendor", "node_modules", "mongo-init-scripts"] # Directories to ignore
-exclude_file = []
-exclude_regex = ["_test\\.go"] # Regex for test files to ignore
-
-[run]
-# Command to run the application after a successful build
-# This executes the binary created by the [build] cmd
-cmd = "./tmp/auth_service_app"
+# Command to build your application.
+cmd = "go build -o ./auth main.go"
+# The binary to run.
+bin = "./auth"
+# Watch these file extensions.
+include_ext = ["go", "tpl", "tmpl", "html"]
+# Ignore these directories.
+exclude_dir = ["assets", "tmp", "vendor"]
+# Log file for build errors.
+log = "air_errors.log"
+# Delay between file system events and build.
+stop_on_error = true
+send_interrupt = true
+poll = true
+poll_interval = 500
+delay = 1000
 
 [log]
-time_format = "2006-01-02 15:04:05"
+# Show time in logs.
+time = true
 
 [color]
-app = ""
-build = "yellow"
-main = "magenta"
-runner = "green"
+# Customize colors.
+main = "yellow"
 watcher = "cyan"
+build = "blue"
+runner = "green"
 
 [misc]
-clean_on_exit = true # Clean up the temporary binary when 'air' exits
-
-[screen]
-clear = true # Clear the screen before each restart
+# Delete tmp folder on exit
+clean_on_exit = true

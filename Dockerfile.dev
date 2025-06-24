@@ -1,25 +1,27 @@
-# Dockerfile.dev
+# ./nova-backend-auth-service/Dockerfile.dev
+# Development Dockerfile for the Auth service with Air live-reloading.
 
+# Use the official Golang Alpine image.
 FROM golang:1.24-alpine
 
+# Set the working directory.
 WORKDIR /app
 
-# Install git, often needed by Go module tools and watchers like 'air'
+# Install git, as it might be needed for Go modules.
 RUN apk add --no-cache git
 
-# Install 'air' - using the new module path
-RUN go install github.com/air-verse/air@latest # <-- CHANGED THIS LINE
-
-# Copy go.mod and go.sum to cache dependencies
+# Copy and download dependencies.
 COPY go.mod go.sum ./
 RUN go mod download
 
-# IMPORTANT: Do NOT copy the rest of your source code here for development.
-# The source code will be bind-mounted from your host machine via docker-compose.yml.
+# Install 'air' for live-reloading.
+RUN go install github.com/air-verse/air@latest
 
-# Expose the port your Go service listens on (e.g., 50053)
+# Copy the rest of the source code.
+COPY . .
+
+# Expose the service port for documentation.
 EXPOSE 50053
 
-# Set the command to run 'air'. 'air' will then watch for file changes,
-# recompile your application, and restart it.
-CMD ["air"]
+# Start the service with air.
+CMD ["air", "-c", ".air.toml"]
