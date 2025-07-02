@@ -9,10 +9,10 @@ require (
 	go.mongodb.org/mongo-driver v1.17.3
 	golang.org/x/crypto v0.38.0
 	google.golang.org/grpc v1.72.1
-	google.golang.org/protobuf v1.36.6
+	google.golang.org/protobuf v1.36.6 // indirect
 )
 
-require github.com/software-architecture-proj/nova-backend-common-protos v0.0.0-20250616022611-dcf45b575ecc
+require github.com/software-architecture-proj/nova-backend-common-protos v0.0.0-20250702023127-4d2a66aff785
 
 require (
 	github.com/golang/snappy v0.0.4 // indirect
