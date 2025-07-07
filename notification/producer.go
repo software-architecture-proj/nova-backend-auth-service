@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	amqpURL    = "amqp://notifier:S3cUr0!Pass@rabbitmq:5672/notifications"
+	amqpURL    = "amqp://notifier:G8Xg2VU84l@notifications-cluster.rabbitmq.svc.cluster.local:5672/notifications"
 	exchange   = "notifications"
 	routingKey = "email"
 )
